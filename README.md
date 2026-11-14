@@ -12,7 +12,7 @@ An open, high-performance **Model Context Protocol (MCP)** server that empowers 
 
 ## ✨ Features
 
-- 🔍 **Multi-Database Search**: Queries arXiv, OpenAlex, Crossref, and Semantic Scholar concurrently in real time.
+- 🔍 **Multi-Database Search**: Queries arXiv, OpenAlex, Crossref, Semantic Scholar, and Scopus (Elsevier) concurrently in real time.
 - 🧹 **Automatic Deduplication**: Merges duplicate records by DOI, arXiv ID, or title similarity so your AI context isn't cluttered.
 - 🎯 **Relevance & Recency Ranking**: Scores papers based on query term overlap (weighted on title and abstract), citation count (logarithmic), recency, and open access availability.
 - 📝 **Auto BibTeX Generation**: Instantly produces valid, formatted BibTeX citations ready for LaTeX or Word documents.
@@ -43,7 +43,10 @@ Add the MCP server directly using `claude mcp add`:
 
 ```bash
 # Option A: Run directly from GitHub repository via uvx (Recommended)
-claude mcp add academic-paper-mcp -s user -- uvx --from git+https://github.com/<YOUR_USERNAME>/academic-paper-mcp academic-paper-mcp
+claude mcp add academic-paper-mcp -s user \
+  -e SCOPUS_API_KEY=your_scopus_api_key \
+  -e SEMANTIC_SCHOLAR_API_KEY=your_s2_api_key \
+  -- uvx --from git+https://github.com/<YOUR_USERNAME>/academic-paper-mcp academic-paper-mcp
 
 # Option B: Run from local directory using uv
 claude mcp add academic-paper-mcp -s user -- uv --directory /path/to/academic-paper-mcp run academic-paper-mcp
@@ -65,6 +68,7 @@ In your workspace or global Antigravity settings (`mcp_servers.json` or Antigrav
       "command": "uvx",
       "args": ["--from", "git+https://github.com/<YOUR_USERNAME>/academic-paper-mcp", "academic-paper-mcp"],
       "env": {
+        "SCOPUS_API_KEY": "",
         "SEMANTIC_SCHOLAR_API_KEY": ""
       }
     }
@@ -102,7 +106,11 @@ Edit your Claude Desktop configuration file:
   "mcpServers": {
     "academic-paper-mcp": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/<YOUR_USERNAME>/academic-paper-mcp", "academic-paper-mcp"]
+      "args": ["--from", "git+https://github.com/<YOUR_USERNAME>/academic-paper-mcp", "academic-paper-mcp"],
+      "env": {
+        "SCOPUS_API_KEY": "",
+        "SEMANTIC_SCHOLAR_API_KEY": ""
+      }
     }
   }
 }
@@ -132,6 +140,11 @@ In your MCP configuration file (e.g. `.cursor/mcp.json` or Zed settings):
 Create a `.env` file in the project folder if you want to configure optional API keys:
 
 ```ini
+# Elsevier Scopus API Key (Get free key at: https://dev.elsevier.com)
+SCOPUS_API_KEY=
+# Optional: Elsevier Institutional Token for off-campus/remote access
+SCOPUS_INST_TOKEN=
+
 # Semantic Scholar API Key (Recommended to avoid rate limits: https://www.semanticscholar.org/product/api)
 SEMANTIC_SCHOLAR_API_KEY=
 

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "academic-paper-mcp"
 version = "0.1.0"
-description = "Model Context Protocol (MCP) server for searching, ranking, citing, and downloading academic research papers across arXiv, OpenAlex, Crossref, and Semantic Scholar."
+description = "Model Context Protocol (MCP) server for searching, ranking, citing, and downloading academic research papers across arXiv, OpenAlex, Crossref, Semantic Scholar, and Scopus (Elsevier)."
 readme = "README.md"
 authors = [
     { name = "Academic MCP Contributor" }

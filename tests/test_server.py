@@ -58,3 +58,5 @@ async def test_list_sources():
     assert "arxiv" in sources_json
     assert "openalex" in sources_json
     assert "crossref" in sources_json
+    assert "semantic_scholar" in sources_json
+    assert "scopus" in sources_json
