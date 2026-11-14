@@ -1,4 +1,7 @@
-# academic-paper-mcp
+# academic-paper-mcp (Part of DPM Research)
+
+[![Repository](https://img.shields.io/badge/GitHub-rico192%2Facademic--paper--mcp-blue?logo=github)](https://github.com/rico192/academic-paper-mcp)
+[![Part of DPM Research](https://img.shields.io/badge/Part%20of-DPM%20Research-green)](https://github.com/rico192/academic-paper-mcp)
 
 An open, high-performance **Model Context Protocol (MCP)** server that empowers AI Agents (**Antigravity**, **Claude Code**, **Claude Desktop**, **Cursor**, **Windsurf**, **Zed**, etc.) to search, fetch, rank, cite, and download academic papers across major scholarly databases:
 
@@ -46,7 +49,7 @@ Add the MCP server directly using `claude mcp add`:
 claude mcp add academic-paper-mcp -s user \
   -e SCOPUS_API_KEY=your_scopus_api_key \
   -e SEMANTIC_SCHOLAR_API_KEY=your_s2_api_key \
-  -- uvx --from git+https://github.com/<YOUR_USERNAME>/academic-paper-mcp academic-paper-mcp
+  -- uvx --from git+https://github.com/rico192/academic-paper-mcp academic-paper-mcp
 
 # Option B: Run from local directory using uv
 claude mcp add academic-paper-mcp -s user -- uv --directory /path/to/academic-paper-mcp run academic-paper-mcp
@@ -66,7 +69,7 @@ In your workspace or global Antigravity settings (`mcp_servers.json` or Antigrav
   "mcpServers": {
     "academic-paper-mcp": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/<YOUR_USERNAME>/academic-paper-mcp", "academic-paper-mcp"],
+      "args": ["--from", "git+https://github.com/rico192/academic-paper-mcp", "academic-paper-mcp"],
       "env": {
         "SCOPUS_API_KEY": "",
         "SEMANTIC_SCHOLAR_API_KEY": ""
@@ -106,7 +109,7 @@ Edit your Claude Desktop configuration file:
   "mcpServers": {
     "academic-paper-mcp": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/<YOUR_USERNAME>/academic-paper-mcp", "academic-paper-mcp"],
+      "args": ["--from", "git+https://github.com/rico192/academic-paper-mcp", "academic-paper-mcp"],
       "env": {
         "SCOPUS_API_KEY": "",
         "SEMANTIC_SCHOLAR_API_KEY": ""
@@ -161,7 +164,7 @@ CROSSREF_EMAIL=your-email@example.com
 
 ```bash
 # Clone the repository
-git clone https://github.com/<YOUR_USERNAME>/academic-paper-mcp.git
+git clone https://github.com/rico192/academic-paper-mcp.git
 cd academic-paper-mcp
 
 # Install dependencies with uv or pip
