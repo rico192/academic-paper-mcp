@@ -20,7 +20,23 @@ An open, high-performance **Model Context Protocol (MCP)** server that empowers 
 - 🎯 **Relevance & Recency Ranking**: Scores papers based on query term overlap (weighted on title and abstract), citation count (logarithmic), recency, and open access availability.
 - 📝 **Auto BibTeX Generation**: Instantly produces valid, formatted BibTeX citations ready for LaTeX or Word documents.
 - 📥 **Direct PDF Downloader**: Downloads open-access paper PDFs directly to your workspace for immediate agent reading and analysis.
-- ⚡ **Zero Setup Required**: Searches work out-of-the-box immediately without needing any paid API keys.
+- ⚡ **Zero Setup Required for Open Databases**: Searches across arXiv, OpenAlex, and Crossref work out-of-the-box immediately without needing any API keys; simply add `SCOPUS_API_KEY` and `SEMANTIC_SCHOLAR_API_KEY` to unlock Scopus and Semantic Scholar indexing.
+
+---
+
+## 🔑 Database Sources & API Key Requirements
+
+| Source | Default Status Without Keys | API Key Required? | Environment Variable | Function & Benefits |
+|---|---|---|---|---|
+| 🟢 **arXiv** | ✅ Active | ❌ No | *None needed* | Free open-access archive for CS, Math, and Physics. |
+| 🟢 **OpenAlex** | ✅ Active | ❌ No | *Optional:* `OPENALEX_EMAIL` | 250M+ scholarly records worldwide. |
+| 🟢 **Crossref** | ✅ Active | ❌ No | *Optional:* `CROSSREF_EMAIL` | Official global DOI registry and metadata. |
+| 🟡 **Semantic Scholar** | ⏸️ **Skipped if no key** | 🔑 **YES (Required)** | `SEMANTIC_SCHOLAR_API_KEY` | Unlocks AI-powered citation graphs, TLDR summaries, and full abstracts (prevents 429 rate limits). |
+| 🔵 **Scopus (Elsevier)** | ⏸️ **Skipped if no key** | 🔑 **YES (Required)** | `SCOPUS_API_KEY` *(+ opt `SCOPUS_INST_TOKEN`)* | Unlocks premier curated peer-reviewed Q1-Q4 index. |
+
+> ⚠️ **CRITICAL FOR AI AGENTS & USERS:** 
+> - **Both Scopus AND Semantic Scholar are SKIPPED by default** unless their respective API keys are provided in the MCP `env` configuration!
+> - To get the full power of all 5 academic databases, **always include both `SCOPUS_API_KEY` and `SEMANTIC_SCHOLAR_API_KEY`** in your MCP settings.
 
 ---
 
@@ -130,7 +146,11 @@ In your MCP configuration file (e.g. `.cursor/mcp.json` or Zed settings):
   "mcpServers": {
     "academic-paper-mcp": {
       "command": "uv",
-      "args": ["--directory", "/path/to/academic-paper-mcp", "run", "academic-paper-mcp"]
+      "args": ["--directory", "/path/to/academic-paper-mcp", "run", "academic-paper-mcp"],
+      "env": {
+        "SCOPUS_API_KEY": "",
+        "SEMANTIC_SCHOLAR_API_KEY": ""
+      }
     }
   }
 }
@@ -138,9 +158,9 @@ In your MCP configuration file (e.g. `.cursor/mcp.json` or Zed settings):
 
 ---
 
-## ⚙️ Environment Variables (Optional)
+## ⚙️ Environment Variables Reference
 
-Create a `.env` file in the project folder if you want to configure optional API keys:
+Create a `.env` file in the project folder or configure environment variables in your MCP client:
 
 ```ini
 # Elsevier Scopus API Key (Get free key at: https://dev.elsevier.com)
@@ -148,7 +168,7 @@ SCOPUS_API_KEY=
 # Optional: Elsevier Institutional Token for off-campus/remote access
 SCOPUS_INST_TOKEN=
 
-# Semantic Scholar API Key (Recommended to avoid rate limits: https://www.semanticscholar.org/product/api)
+# Semantic Scholar API Key (Free key at: https://www.semanticscholar.org/product/api)
 SEMANTIC_SCHOLAR_API_KEY=
 
 # Polite pool identification for OpenAlex & Crossref (Recommended for faster response times)
@@ -156,7 +176,7 @@ OPENALEX_EMAIL=your-email@example.com
 CROSSREF_EMAIL=your-email@example.com
 ```
 
-*Note: If no environment variables are provided, arXiv, OpenAlex, and Crossref will continue to work normally with 100% free public access.*
+*Note: If no API keys are provided, arXiv, OpenAlex, and Crossref will continue to work normally with 100% free public access. Provide `SCOPUS_API_KEY` and `SEMANTIC_SCHOLAR_API_KEY` to activate Scopus and Semantic Scholar.*
 
 ---
 

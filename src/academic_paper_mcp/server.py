@@ -50,7 +50,7 @@ def get_adapters() -> dict[str, BaseAdapter]:
 
 @mcp.tool()
 async def list_sources() -> str:
-    """List all supported academic sources and their configuration status (e.g. arXiv, OpenAlex, Crossref, Semantic Scholar)."""
+    """List all supported academic sources and their configuration status (arXiv, OpenAlex, Crossref, Semantic Scholar, Scopus). Shows which sources are active and which need an API key."""
     adapters = get_adapters()
     sources = []
     for name, adapter in adapters.items():
@@ -59,6 +59,7 @@ async def list_sources() -> str:
             "display_name": adapter.display_name,
             "configured": adapter.is_configured(),
             "requires_key": adapter.requires_key,
+            "env_key": "SCOPUS_API_KEY" if adapter.name == "scopus" else ("SEMANTIC_SCHOLAR_API_KEY" if adapter.name == "semantic_scholar" else None),
             "description": adapter.description,
         })
     return json.dumps(sources, indent=2)
@@ -75,6 +76,11 @@ async def search_papers(
     """Search academic papers across multiple databases (arXiv, OpenAlex, Crossref, Semantic Scholar, Scopus).
     
     Returns deduplicated, relevance-ranked papers with verified metadata (title, authors, year, venue, DOI, abstract, citations, open-access link, and BibTeX citation).
+    
+    API Key Notes:
+    - arXiv, OpenAlex, Crossref: 100% active out-of-the-box (no API key needed).
+    - Scopus: requires 'SCOPUS_API_KEY' in env. If not configured, Scopus is skipped.
+    - Semantic Scholar: requires 'SEMANTIC_SCHOLAR_API_KEY' in env. If not configured, Semantic Scholar is skipped.
     
     Args:
         query: Academic topic or keywords (e.g. 'deep reinforcement learning robotics', 'electro-hydrostatic actuator PID').
