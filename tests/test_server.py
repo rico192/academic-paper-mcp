@@ -65,5 +65,5 @@ async def test_list_sources():
 
 def test_build_ezproxy_url():
     url = build_ezproxy_url("10.1016/j.compind.2021.103551")
-    assert "ezproxy.uns.ac.id" in url
+    assert "login.unslib.idm.oclc.org" in url
     assert "10.1016/j.compind.2021.103551" in url

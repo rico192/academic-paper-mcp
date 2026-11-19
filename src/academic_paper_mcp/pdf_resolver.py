@@ -11,15 +11,21 @@ from academic_paper_mcp.deduplication import normalize_arxiv_id, normalize_doi
 
 logger = logging.getLogger("academic_paper_mcp.pdf_resolver")
 
-EZPROXY_DOMAIN = os.getenv("EZPROXY_DOMAIN", "ezproxy.uns.ac.id")
+EZPROXY_PREFIX = os.getenv("EZPROXY_PREFIX", "https://login.unslib.idm.oclc.org/login?url=")
 DEFAULT_EMAIL = os.getenv("UNPAYWALL_EMAIL") or os.getenv("OPENALEX_EMAIL") or "dev@dpm.web.id"
 
 
 def build_ezproxy_url(doi: str) -> str:
-    """Build pre-authenticated institutional EZproxy URL for paywalled DOIs."""
+    """Build pre-authenticated institutional EZproxy URL for paywalled DOIs.
+    
+    UNS Library EZproxy uses OCLC IDM authentication:
+    Format: https://login.unslib.idm.oclc.org/login?url=https://doi.org/<DOI>
+    """
     clean_doi = normalize_doi(doi) or doi
-    # Standard EZproxy format: https://doi-org.ezproxy.uns.ac.id/10.xxxx/...
-    return f"https://doi-org.{EZPROXY_DOMAIN}/{clean_doi}"
+    clean_prefix = EZPROXY_PREFIX.strip()
+    if not clean_prefix.endswith("="):
+        clean_prefix += "?url=" if "?" not in clean_prefix else "&url="
+    return f"{clean_prefix}https://doi.org/{clean_doi}"
 
 
 async def resolve_doi_to_pdf(
