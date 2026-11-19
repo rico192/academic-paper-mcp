@@ -5,6 +5,7 @@ from academic_paper_mcp.adapters.arxiv import ArxivAdapter
 from academic_paper_mcp.citation import generate_bibtex
 from academic_paper_mcp.deduplication import deduplicate_papers, normalize_doi, normalize_title
 from academic_paper_mcp.models import Paper
+from academic_paper_mcp.pdf_resolver import build_ezproxy_url
 from academic_paper_mcp.ranking import rank_papers
 from academic_paper_mcp.server import list_sources, search_papers
 
@@ -60,3 +61,9 @@ async def test_list_sources():
     assert "crossref" in sources_json
     assert "semantic_scholar" in sources_json
     assert "scopus" in sources_json
+
+
+def test_build_ezproxy_url():
+    url = build_ezproxy_url("10.1016/j.compind.2021.103551")
+    assert "ezproxy.uns.ac.id" in url
+    assert "10.1016/j.compind.2021.103551" in url

@@ -41,6 +41,7 @@ from academic_paper_mcp.adapters import ADAPTER_REGISTRY, BaseAdapter
 from academic_paper_mcp.citation import generate_bibtex
 from academic_paper_mcp.deduplication import deduplicate_papers, normalize_arxiv_id, normalize_doi
 from academic_paper_mcp.models import Paper
+from academic_paper_mcp.pdf_resolver import build_ezproxy_url, resolve_doi_to_pdf
 from academic_paper_mcp.ranking import rank_papers
 
 
@@ -241,33 +242,75 @@ async def get_bibtex(identifier: str) -> str:
 
 @mcp.tool()
 async def download_paper_pdf(
-    pdf_url_or_arxiv_id: str,
+    identifier_or_url: str,
     save_directory: str = "./downloads",
     custom_filename: Optional[str] = None,
 ) -> str:
-    """Download an open-access academic paper PDF to a local directory for reading/inspection.
+    """Download an academic paper PDF to a local directory for reading/inspection.
+    
+    Accepts a DOI (e.g. '10.1371/journal.pone.0000001'), arXiv ID (e.g. '1706.03762'), or direct PDF URL.
+    Uses Unpaywall, OpenAlex, and Europe PMC to resolve open-access PDFs for paywalled DOIs.
+    If the paper is strictly paywalled, returns the institutional EZproxy UNS URL for authenticated campus access.
     
     Args:
-        pdf_url_or_arxiv_id: Direct PDF URL or arXiv ID (e.g. '1706.03762' or 'https://arxiv.org/pdf/1706.03762.pdf').
+        identifier_or_url: Paper DOI (e.g. '10.1016/j...'), arXiv ID (e.g. '1706.03762'), or direct PDF URL.
         save_directory: Local directory where the PDF should be saved (default: './downloads').
-        custom_filename: Optional custom file name (e.g. 'attention_is_all_you_need.pdf').
+        custom_filename: Optional custom file name (e.g. 'paper_attention.pdf').
     """
-    target = pdf_url_or_arxiv_id.strip()
+    clean_target = identifier_or_url.strip()
+    norm_doi = normalize_doi(clean_target)
+    norm_arxiv = normalize_arxiv_id(clean_target)
 
-    # If arXiv ID is provided
-    norm_arxiv = normalize_arxiv_id(target)
+    resolved_engine: Optional[str] = None
+    target_url: Optional[str] = None
+    default_name: Optional[str] = None
+
+    # Case 1: arXiv ID
     if norm_arxiv and re.match(r"^\d{4}\.\d{4,5}$", norm_arxiv):
         target_url = f"https://arxiv.org/pdf/{norm_arxiv}.pdf"
         default_name = f"arxiv_{norm_arxiv}.pdf"
-    elif target.startswith("http://") or target.startswith("https://"):
-        target_url = target
-        default_name = target.split("/")[-1].split("?")[0]
-        if not default_name.endswith(".pdf"):
-            default_name = f"paper_{abs(hash(target)) % 100000}.pdf"
-    else:
-        return json.dumps({"error": f"Invalid URL or arXiv ID: '{pdf_url_or_arxiv_id}'"})
+        resolved_engine = "arXiv"
 
-    filename = custom_filename.strip() if custom_filename else default_name
+    # Case 2: Direct HTTP(S) URL
+    elif clean_target.startswith("http://") or clean_target.startswith("https://"):
+        if "doi.org/" in clean_target and norm_doi:
+            pass  # Fall through to DOI resolution
+        else:
+            target_url = clean_target
+            default_name = clean_target.split("/")[-1].split("?")[0]
+            if not default_name.endswith(".pdf"):
+                default_name = f"paper_{abs(hash(clean_target)) % 100000}.pdf"
+            resolved_engine = "DirectURL"
+
+    # Case 3: DOI Resolution via Unpaywall & OpenAlex
+    if not target_url and norm_doi and "/" in norm_doi:
+        logger.info("Resolving DOI '%s' to legal Open Access PDF...", norm_doi)
+        async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+            found_pdf, engine = await resolve_doi_to_pdf(norm_doi, client)
+            if found_pdf:
+                target_url = found_pdf
+                resolved_engine = engine
+                safe_doi = re.sub(r"[^\w\-_]", "_", norm_doi)
+                default_name = f"{safe_doi}.pdf"
+            else:
+                # Paper is strictly paywalled
+                ezproxy_link = build_ezproxy_url(norm_doi)
+                doi_link = f"https://doi.org/{norm_doi}"
+                return json.dumps({
+                    "status": "paywalled",
+                    "message": "Paper is protected by publisher paywall. No public open-access PDF was found across Unpaywall, OpenAlex, or Europe PMC.",
+                    "doi": norm_doi,
+                    "ezproxy_uns_url": ezproxy_link,
+                    "publisher_url": doi_link,
+                    "instruction": f"Open the EZproxy UNS link ({ezproxy_link}) in your browser to download via your campus subscription.",
+                }, indent=2)
+
+    if not target_url:
+        return json.dumps({
+            "error": f"Invalid identifier or URL: '{identifier_or_url}'. Please provide a valid DOI, arXiv ID, or direct PDF URL."
+        })
+
+    filename = custom_filename.strip() if custom_filename else (default_name or "paper.pdf")
     if not filename.endswith(".pdf"):
         filename += ".pdf"
 
@@ -275,7 +318,7 @@ async def download_paper_pdf(
     save_path_dir.mkdir(parents=True, exist_ok=True)
     destination_file = save_path_dir / filename
 
-    logger.info("Downloading PDF from %s to %s", target_url, destination_file)
+    logger.info("Downloading PDF from %s (%s) to %s", target_url, resolved_engine, destination_file)
 
     try:
         headers = {
@@ -285,13 +328,13 @@ async def download_paper_pdf(
             resp = await client.get(target_url, headers=headers)
             if resp.status_code != 200:
                 return json.dumps({
-                    "error": f"Failed to download PDF. Server responded with status code {resp.status_code}"
+                    "error": f"Failed to download PDF from {resolved_engine}. Server responded with status code {resp.status_code}"
                 })
-            
+
             content_type = resp.headers.get("content-type", "").lower()
             if "html" in content_type and len(resp.content) < 5000:
                 return json.dumps({
-                    "error": "The URL returned an HTML webpage instead of a direct PDF document."
+                    "error": "The resolved URL returned an HTML webpage instead of a direct PDF document."
                 })
 
             destination_file.write_bytes(resp.content)
@@ -303,6 +346,7 @@ async def download_paper_pdf(
                 "saved_path": str(destination_file),
                 "file_name": filename,
                 "file_size_kb": file_size_kb,
+                "resolved_via": resolved_engine,
             }, indent=2)
 
     except Exception as e:

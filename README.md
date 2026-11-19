@@ -47,7 +47,7 @@ An open, high-performance **Model Context Protocol (MCP)** server that empowers 
 | `search_papers` | Concurrent multi-database search across all databases with deduplication, ranking, year filtering, and BibTeX generation. Flexible limits (e.g. 10, 30, 50+ papers). |
 | `get_paper_details` | Retrieve deep metadata, complete abstract, links, and BibTeX for a specific paper by DOI or arXiv ID. |
 | `get_bibtex` | Generate formatted BibTeX citation for a DOI, arXiv ID, or title. |
-| `download_paper_pdf` | Download an open-access paper PDF directly into the local workspace. |
+| `download_paper_pdf` | Download academic paper PDF by DOI, arXiv ID, or URL. Automatically resolves legal open-access PDFs across Unpaywall, OpenAlex, and Europe PMC. If strictly paywalled, provides institutional EZproxy UNS access link. |
 | `list_sources` | Inspect available academic search engines and their configuration status. |
 
 ---
